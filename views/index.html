@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../static/css/layui.css">
+    <style>
+        .layui-table {
+            text-align: center;
+        }
+
+        .layui-layout-admin {
+            padding: 20px;
+        }
+
+        .layui-layout-admin .layui-center {
+            text-align: center;
+        }
+
+        #form {
+            padding: 20px;
+        }
+
+        .search {
+            width: 300px;
+        }
+
+        .flex {
+            display: flex;
+
+        }
+
+        .justify-between {
+            justify-content: space-between;
+
+        }
+
+        .top-nav {
+            width: 100%;
+        }
+        .margin-bottom{
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layui-container layui-layout-admin">
+        <div class="margin-bottom">
+            <span class="layui-breadcrumb">
+                <a href="/">首页</a>
+            </span>
+        </div>
+        <div class=" flex justify-between top-nav">
+            <button type="button" class="layui-btn" id="add">添加</button>
+            <form action="/search">
+                <div class="search flex">
+                    <input type="text" name="text" placeholder="关键字" class="layui-input input-search ">
+                    <button class="layui-btn search-butt" type="submit">搜索</button>
+                </div>
+            </form>
+
+        </div>
+        <div class="layui-row">
+            <table class="layui-table">
+                <colgroup>
+                    <col width="150">
+                    <col width="200">
+                    <col>
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="layui-center">ID</th>
+                        <th class="layui-center">名称</th>
+                        <th class="layui-center">性别</th>
+                        <th class="layui-center">年龄</th>
+                        <th class="layui-center">兴趣</th>
+                        <th class="layui-center">入学日期</th>
+                        <th class="layui-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{each listData}}
+                    <tr>
+                        <td>{{$value.id}}</td>
+                        <td>{{$value.name}}</td>
+                        <td>{{$value.gender==1?'男':'女'}}</td>
+                        <td>{{$value.age}}</td>
+                        <td>
+                            {{each $value.interest}}
+                            <span>{{$value}}</span>、
+                            {{/each}}
+                        </td>
+                        <td>{{$value.EnterDate}}</td>
+                        <td>
+                            <div class="layui-btn-group">
+                                <button type="button" class="layui-btn layui-btn-sm edit" data-id="{{$value.id}}">
+                                    <i class="layui-icon">&#xe642;</i>
+                                </button>
+                                <button data-id="{{$value.id}}" type="button" class="layui-btn layui-btn-sm delete">
+                                    <i class="layui-icon">&#xe640;</i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+        <!-- 填写表单 -->
+        <form lay-filter="from" class="layui-form layui-form-pane" action="" id="form" style="display: none;">
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">姓名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" required lay-verify="required" placeholder="请输入标题" autocomplete="off"
+                        class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">性别</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="gender" value="1" title="男">
+                    <input type="radio" name="gender" value="2" title="女" checked>
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">年龄</label>
+                <div class="layui-input-block">
+                    <input type="number" name="age" required lay-verify="required" placeholder="请输入标题"
+                        autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">兴趣</label>
+                <div class="layui-input-block checkbox-item">
+                    <input type="checkbox" name="like[xiezuo]" title="写作" value="写作">
+                    <input type="checkbox" name="like[yuedu]" title="阅读" value="阅读" checked>
+                    <input type="checkbox" name="like[fadai]" title="发呆" value="发呆">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">入学日期</label>
+                <div class="layui-input-block">
+                    <input type="text" name="EnterDate" id="test1" required lay-verify="required" placeholder="请输入标题"
+                        autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script src="../static/layui.all.js"></script>
+    <script>
+        
+        let addEdit = 1 //用来判断当前点击的时编辑还是新增 [1:表示新增，2表示编辑]
+        let userID = 0  //点击编辑和删除时用来保存当前ID
+        layui.use(['layer', 'jquery', 'form', 'laydate'], function () {
+            const $ = layui.$
+            const form = layui.form;
+            const laydate = layui.laydate;
+            //新增窗口
+            $('#add').click(function () {
+                addEdit = 1
+                layer.open({
+                    type: 1,
+                    content: $('#form') //这里content是一个DOM，注意：最好该元素要存放在body最外层，否则可能被其它的相对元素所影响
+                });
+                //重置表单
+                document.getElementById('form').reset();
+            });
+            //删除
+            $('.delete').click(function () {
+                userID = $(this).attr('data-id')
+                layer.confirm('确定要删除吗？', {
+                    btn: ['确认', '取消'], btn1: function (index, layero) {
+                        layer.close(index);
+                        $.ajax({
+                            url: '/delete',
+                            type: 'GET',
+                            data: { id: userID },
+                            traditional: true,
+                            success: (msg) => {
+                                layer.msg("删除成功！");
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 500)
+
+                            }
+                        })
+                    }
+                });
+            })
+            //编辑
+            $(".edit").click(function (e) {
+                addEdit = 2
+                userID = $(this).attr('data-id');
+                $.ajax({
+                    url: '/getInfo',
+                    type: 'get',
+                    data: { id: userID },
+                    traditional: true,
+                    success: (data) => {
+                        let fromData = {
+                            "name": data.name,
+                            "gender": data.gender,
+                            "age": data.age,
+                            "like[xiezuo]": false,
+                            "like[yuedu]": false,
+                            "like[fadai]": false,
+                            "EnterDate": data.EnterDate
+                        }
+                        //给复选框赋值
+                        $('.checkbox-item input').each((index, item) => {
+                            if (data.interest[item.name]) {
+                                fromData[item.name] = true
+                            }
+                        });
+                        form.val("from", fromData);
+                    },
+                    error: (err) => {
+                        console.log(err, '错误了')
+                    }
+
+                })
+                layer.open({
+                    type: 1,
+                    content: $('#form') //这里content是一个DOM，注意：最好该元素要存放在body最外层，否则可能被其它的相对元素所影响
+                });
+            })
+            //监听提交
+            form.on('submit(formDemo)', function (data) {
+                var dataItem = {
+                    "name": data.field.name,
+                    "gender": parseInt(data.field.gender),
+                    "age": parseInt(data.field.age),
+                    "interest": {},
+                    "EnterDate": data.field.EnterDate
+                };
+                $('.checkbox-item input').each((index, item) => {
+                    if (item.checked) {
+                        dataItem.interest[item.name] = item.value
+                    }
+                });
+                if (addEdit == 1) {
+                    $.ajax({
+                        url: '/add',
+                        type: 'POST',
+                        data: { data: JSON.stringify(dataItem) },
+                        traditional: true,
+                        success: (msg) => {
+                            layer.msg("添加成功！");
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 500)
+
+                        }
+                    })
+                } else {
+                    dataItem.id = parseInt(userID);
+                    $.ajax({
+                        url: '/edit',
+                        type: 'POST',
+                        data: { data: JSON.stringify(dataItem) },
+                        traditional: true,
+                        success: (msg) => {
+                            layer.msg("修改成功！");
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 500);
+                        }
+                    })
+                }
+                return false;
+            });
+            //搜索
+            $('.search-butt').click(function () {
+                let text =  $('.input-search').val();
+                if(text==''){
+                    layer.msg("请输入关键字");
+                    return false
+                }
+            })
+            //日期选择
+            laydate.render({
+                elem: '#test1' //指定元素
+            });
+
+        });
+
+    </script>
+</body>
+
+</html>
